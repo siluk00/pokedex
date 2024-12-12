@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -38,15 +37,16 @@ func main() {
 	for {
 		fmt.Print("Pokédex >")
 		cmdArgs, err := bufio.NewReader(os.Stdin).ReadString('\n')
+
+		if err != nil {
+
+			fmt.Printf("Couldn't read: %s", err)
+		}
+
 		cmdArgs = strings.TrimSpace(cmdArgs)
 		cmdArgsSlice := strings.Split(cmdArgs, " ")
 		cmd := cmdArgsSlice[0]
 		args := strings.Join(cmdArgsSlice[1:], " ")
-
-		if err != nil {
-			log.Fatalf("Couldn't read: %s", err)
-		}
-
 		Act(cmd, args, &cfg)
 	}
 }
@@ -56,8 +56,8 @@ func Act(cmd string, args string, cfg *Config) {
 	cmdStruct, ok := commandList[cmd]
 	if !ok {
 		fmt.Printf("Command not recognized. Type 'help' to see options\n")
-		return
 	}
+
 	cmdStruct.callback(args, cfg)
 }
 
@@ -164,7 +164,9 @@ func commandExplore(args string, cfg *Config) {
 	var mapToExplore pokemap
 	url := getUrl(args)
 	fetchResource(url, &mapToExplore, cfg)
-
+	for _, encounter := range mapToExplore.PokemonEncounters {
+		fmt.Println(encounter.Pokemon.Name)
+	}
 }
 
 func fetchResource(url string, mapToExplore *pokemap, cfg *Config) error {
