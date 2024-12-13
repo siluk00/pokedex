@@ -44,17 +44,23 @@ func main() {
 
 		if err != nil {
 			if err == io.EOF {
+				fmt.Println("Closing the Pokedex... Goodbye!")
 				os.Exit(0)
 			}
 			fmt.Printf("Couldn't read: %s", err)
 		}
 
-		cmdArgs = strings.TrimSpace(cmdArgs)
-		cmdArgsSlice := strings.Split(cmdArgs, " ")
+		cmdArgsSlice := cleanInput(cmdArgs)
 		cmd := cmdArgsSlice[0]
 		args := strings.Join(cmdArgsSlice[1:], " ")
 		Run(cmd, args, &cfg)
 	}
+}
+
+func cleanInput(text string) []string {
+	text = strings.TrimSpace(text)
+	text = strings.ToLower(text)
+	return strings.Fields(text)
 }
 
 func parseArgs(cmd CliCommand, args string) error {
@@ -92,7 +98,7 @@ func Run(cmd string, args string, cfg *Config) {
 }
 
 func commandHelp(args string, cfg *Config) {
-	fmt.Printf("Welcome to pokédex! Usage: \n\n")
+	fmt.Printf("Welcome to the Pokedex! Usage: \n\n")
 
 	cmdList := getCommandList()
 
@@ -102,6 +108,7 @@ func commandHelp(args string, cfg *Config) {
 }
 
 func commandExit(args string, cfg *Config) {
+	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 }
 
@@ -148,6 +155,12 @@ func getCommandList() map[string]CliCommand {
 			description: "Inspect pokemons on pokedex",
 			callback:    commandInspect,
 			argsUse:     "invalid argument. Use 'inspect pokemon_name' or 'inspect pokemon_id' instead",
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Prints pokedex",
+			callback:    commandPokedex,
+			argsUse:     "invalid argument. Use 'pokedex' without arguments",
 		},
 	}
 }
@@ -206,12 +219,18 @@ func mapHelper(cfg *Config, reverse bool) {
 	cfg.page = i
 }
 
-func commandExplore(args string, cfg *Config) {
-	if len(strings.Split(args, " ")) != 1 {
-		fmt.Printf("Invalid argument. Use 'explore region' or 'explore id' instead\n")
-		return
+func commandPokedex(args string, cfg *Config) {
+	if len(cfg.pokedex) == 0 {
+		fmt.Println("You haven't catched any pokemon yet")
+	} else {
+		fmt.Println("Your Pokedex:")
+		for k := range cfg.pokedex {
+			fmt.Printf("\t-%s\n", k)
+		}
 	}
+}
 
+func commandExplore(args string, cfg *Config) {
 	var mapToExplore pokemap
 	url := getMapUrl(args)
 	fetchResource(url, &mapToExplore, cfg)
